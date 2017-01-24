@@ -21,32 +21,25 @@ def shuffle_string(s):
 
 
 def get_complement(nucleotide):
-    """ Returns the complementary nucleotide
-
-        nucleotide: a nucleotide (A, C, G, or T) represented as a string
-        returns: the complementary nucleotide
-    >>> get_complement('A')
-    'T'
-    >>> get_complement('C')
-    'G'
-    """
-    # TODO: implement this
-    pass
+    if nucleotide == 'A':
+        return 'T'
+    elif nucleotide == 'T':
+        return 'A'
+    elif nucleotide == 'C':
+        return 'G'
+    elif nucleotide == 'G':
+        return 'C'
+    else:
+        return 'NA'
 
 
 def get_reverse_complement(dna):
-    """ Computes the reverse complementary sequence of DNA for the specfied DNA
-        sequence
-
-        dna: a DNA sequence represented as a string
-        returns: the reverse complementary DNA sequence represented as a string
-    >>> get_reverse_complement("ATGCCCGCTTT")
-    'AAAGCGGGCAT'
-    >>> get_reverse_complement("CCGCGTTCA")
-    'TGAACGCGG'
-    """
-    # TODO: implement this
-    pass
+    reversed_dna = dna[::-1]            # reverses string
+    list_dna = list(reversed_dna)       # creates list from string
+    blank_to_return = ''
+    for i in range(0, len(list_dna)):
+        blank_to_return += get_complement(list_dna[i])
+    return blank_to_return
 
 
 def rest_of_ORF(dna):
@@ -62,8 +55,24 @@ def rest_of_ORF(dna):
     >>> rest_of_ORF("ATGAGATAGG")
     'ATGAGA'
     """
-    # TODO: implement this
-    pass
+    stop_codons = ['TAG', 'TAA', 'TGA']
+    list_dna = []
+    hold = dna
+    length = int(len(dna)/3)
+    for i in range(0, length):      # Seperates out string into codons
+        list_dna.append(dna[:3])    # Adds codon to list
+        dna = dna[3:]               # Modifies original DNA string
+    list_dna.append(dna[::])        # Adds the remaining characters back in
+    final_index = -1                # Establishes base case
+    for i in range(0, len(list_dna)):
+        for o in range(0, 3):
+            if(list_dna[i] == stop_codons[o]):
+                final_index = i*3
+    dna = hold                      # Done to allow for full printing w/o stop
+    if(final_index == -1):          # Done to fix dropping of last character
+        return dna
+    else:
+        return dna[:final_index]
 
 
 def find_all_ORFs_oneframe(dna):
@@ -79,8 +88,26 @@ def find_all_ORFs_oneframe(dna):
     >>> find_all_ORFs_oneframe("ATGCATGAATGTAGATAGATGTGCCC")
     ['ATGCATGAATGTAGA', 'ATGTGCCC']
     """
-    # TODO: implement this
-    pass
+    to_return = []
+    index = 0
+    while(index > -1):                          # Until no more start codons
+        index = dna.find('ATG')                 # Searches for start codon
+        if(index == -1):
+            break
+        if(index % 3 != 0):
+            dna = dna[index+(3-index % 3):]
+            index = dna.find('ATG')
+            if(index == -1 or index % 3 != 0):
+                break
+            else:
+                dna = dna[index:]
+        else:
+            dna = dna[index:]
+        to_append = rest_of_ORF(dna)
+        to_return.append(to_append)
+        length = len(to_append)
+        dna = dna[length:]
+    return to_return
 
 
 def find_all_ORFs(dna):
@@ -96,8 +123,22 @@ def find_all_ORFs(dna):
     >>> find_all_ORFs("ATGCATGAATGTAG")
     ['ATGCATGAATGTAG', 'ATGAATGTAG', 'ATG']
     """
-    # TODO: implement this
-    pass
+    a = 1
+    solution = []
+    try:
+        solution.append(find_all_ORFs_oneframe(dna)[0])
+    except IndexError:
+        a = 2
+    try:
+        solution.append(find_all_ORFs_oneframe(dna[1:])[0])
+    except IndexError:
+        a = 3
+    try:
+        solution.append(find_all_ORFs_oneframe(dna[2:])[0])
+    except IndexError:
+        a = 4
+    return solution
+    print(a)
 
 
 def find_all_ORFs_both_strands(dna):
@@ -109,8 +150,19 @@ def find_all_ORFs_both_strands(dna):
     >>> find_all_ORFs_both_strands("ATGCGAATGTAGCATCAAA")
     ['ATGCGAATG', 'ATGCTACATTCGCAT']
     """
-    # TODO: implement this
-    pass
+    base_pair = get_reverse_complement(dna)
+    solution = []
+    a = 1
+    try:
+        solution.append(find_all_ORFs(dna)[0])
+    except IndexError:
+        a = 2
+    try:
+        solution.append(find_all_ORFs(base_pair)[0])
+    except IndexError:
+        a = 3
+    return solution
+    print(a)
 
 
 def longest_ORF(dna):
@@ -119,8 +171,12 @@ def longest_ORF(dna):
     >>> longest_ORF("ATGCGAATGTAGCATCAAA")
     'ATGCTACATTCGCAT'
     """
-    # TODO: implement this
-    pass
+    solution = find_all_ORFs_both_strands(dna)
+    longest = ''
+    for i in range(0, len(solution)):
+        if(len(solution[i]) > len(longest)):
+            longest = solution[i]
+    return longest
 
 
 def longest_ORF_noncoding(dna, num_trials):
@@ -148,8 +204,36 @@ def coding_strand_to_AA(dna):
         >>> coding_strand_to_AA("ATGCCCGCTTT")
         'MPA'
     """
-    # TODO: implement this
-    pass
+    I = ['I', 'ATT', 'ATC', 'ATA']
+    L = ['L', 'CTT', 'CTC', 'CTA', 'CTG', 'TTA', 'TTG']
+    V = ['V', 'GTT', 'GTC', 'GTA', 'GTG']
+    F = ['F', 'TTT', 'TTC']
+    M = ['M', 'ATG']
+    C = ['C', 'TGT', 'TGC']
+    A = ['A', 'GCT', 'GCC', 'GCA', 'GCG']
+    G = ['G', 'GGT', 'GGC', 'GGA', 'GGG']
+    P = ['P', 'CCT', 'CCC', 'CCA', 'CCG']
+    T = ['T', 'ACT', 'ACC', 'ACA', 'ACG']
+    S = ['S', 'TCT', 'TCC', 'TCA', 'TCG', 'AGT', 'AGC']
+    Y = ['TAT', 'TAC']
+    W = ['W', 'TGG']
+    Q = ['Q', 'CAA', 'CAG']
+    N = ['N', 'AAT', 'AAC']
+    H = ['H', 'CAT', 'CAC']
+    E = ['E', 'GAA', 'GAG']
+    D = ['D', 'GAT', 'GAC']
+    K = ['K', 'AAA', 'AAG']
+    R = ['R', 'CGT', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG']
+    amino = [I, L, V, F, M, C, A, G, P, T, S, Y, W, Q, N, H, E, D, K, R]
+    solution = ''
+    for i in range(0, int(len(dna)/3)):
+        tested = dna[:3]
+        dna = dna[3:]
+        for o in range(0, len(amino)):
+            for q in range(0, len(amino[o])):
+                if(tested == amino[o][q]):
+                    solution += amino[o][0]
+    return solution
 
 
 def gene_finder(dna):
@@ -160,6 +244,7 @@ def gene_finder(dna):
     """
     # TODO: implement this
     pass
+
 
 if __name__ == "__main__":
     import doctest

@@ -204,7 +204,7 @@ def longest_ORF_noncoding(dna, num_trials):
     to_test = []
     for i in range(0, num_trials):
         shuffled_dna = shuffle_string(dna)
-        to_test.append(longest_ORF(shuffled_dna))
+        to_test += longest_ORF(shuffled_dna)
         longest = len(max(to_test))
     return longest
 

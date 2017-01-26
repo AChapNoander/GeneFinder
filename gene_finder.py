@@ -105,6 +105,8 @@ def find_all_ORFs_oneframe(dna):
         returns: a list of non-nested ORFs
     >>> find_all_ORFs_oneframe("ATGCATGAATGTAGATAGATGTGCCC")
     ['ATGCATGAATGTAGA', 'ATGTGCCC']
+    >>> find_all_ORFs_oneframe("GCATGAATGTAG")
+    ['ATG']
     """
     list_dna = []
     hold = dna
@@ -144,22 +146,16 @@ def find_all_ORFs(dna):
     >>> find_all_ORFs("ATGCATGAATGTAG")
     ['ATGCATGAATGTAG', 'ATGAATGTAG', 'ATG']
     """
-    a = 1
     solution = []
-    try:
-        solution.append(find_all_ORFs_oneframe(dna)[0])
-    except IndexError:
-        a = 2
-    try:
-        solution.append(find_all_ORFs_oneframe(dna[1:])[0])
-    except IndexError:
-        a = 3
-    try:
-        solution.append(find_all_ORFs_oneframe(dna[2:])[0])
-    except IndexError:
-        a = 4
+    first = find_all_ORFs_oneframe(dna)
+    second = find_all_ORFs_oneframe(dna[1:])
+    third = find_all_ORFs_oneframe(dna[2:])
+    to_add = [first, second, third]
+    solution = []
+    for i in to_add:
+        if i is not None:
+            solution += i
     return solution
-    print(a)
 
 
 def find_all_ORFs_both_strands(dna):
@@ -172,18 +168,15 @@ def find_all_ORFs_both_strands(dna):
     ['ATGCGAATG', 'ATGCTACATTCGCAT']
     """
     base_pair = get_reverse_complement(dna)
+    base = find_all_ORFs(dna)
+    paired = find_all_ORFs(base_pair)
     solution = []
-    a = 1
-    try:
-        solution.append(find_all_ORFs(dna)[0])
-    except IndexError:
-        a = 2
-    try:
-        solution.append(find_all_ORFs(base_pair)[0])
-    except IndexError:
-        a = 3
+    to_add = [base, paired]
+    solution = []
+    for i in to_add:
+        if i is not None:
+            solution += i
     return solution
-    print(a)
 
 
 def longest_ORF(dna):

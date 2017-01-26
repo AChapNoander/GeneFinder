@@ -10,6 +10,7 @@ import random
 from amino_acids import aa, codons, aa_table   # you may find these useful
 from load import load_seq
 dna_master = load_seq("./data/X73525.fa")
+print(dna_master)
 
 
 def shuffle_string(s):
@@ -72,25 +73,25 @@ def rest_of_ORF(dna):
     'ATG'
     >>> rest_of_ORF("ATGAGATAGG")
     'ATGAGA'
+    >>> rest_of_ORF("ATGATATTCG")
+    'ATGATATTCG'
     """
     stop_codons = ['TAG', 'TAA', 'TGA']
     list_dna = []
-    hold = dna
-    length = int(len(dna)/3)
-    for i in range(0, length):      # Seperates out string into codons
-        list_dna.append(dna[:3])    # Adds codon to list
-        dna = dna[3:]               # Modifies original DNA string
-    list_dna.append(dna)            # Adds the remaining characters back in
-    final_index = -1                # Establishes base case
-    for i in range(0, len(list_dna)):
-        for o in range(0, 3):
-            if(list_dna[i] == stop_codons[o]):
-                final_index = i*3
-    dna = hold                      # Done to allow for full printing w/o stop
-    if(final_index == -1):          # Done to fix dropping of last character
-        return dna
-    else:
-        return dna[:final_index]
+    ended = False
+    i = 0
+    while ended is False:
+        i += 3
+        to_append = dna[i-3:i]
+        list_dna.append
+        for stop_codon in stop_codons:
+            if(to_append == stop_codon):
+                ended = True
+            if(i > len(dna)):
+                return(dna)
+                ended = True
+    to_return = dna[0:i-3]
+    return to_return
 
 
 def find_all_ORFs_oneframe(dna):
@@ -107,6 +108,9 @@ def find_all_ORFs_oneframe(dna):
     ['ATGCATGAATGTAGA', 'ATGTGCCC']
     >>> find_all_ORFs_oneframe("GCATGAATGTAG")
     ['ATG']
+
+    >>> find_all_ORFs_oneframe("CCCATGTAG")
+    ['ATG']
     """
     list_dna = []
     hold = dna
@@ -116,20 +120,21 @@ def find_all_ORFs_oneframe(dna):
         dna = dna[3:]               # Modifies original DNA string
     list_dna.append(dna)            # Adds the remaining characters back in
     dna = hold
-    indexes = []
-    for i in range(0, len(list_dna)):
-        if(list_dna[i] == 'ATG'):
-            indexes.append(i*3)
     to_return = []
-    hold_index = -1
-    for i in range(0, len(indexes)):
-        if(hold_index < indexes[i]):
-            dna = dna[indexes[i]:]
-            to_append = rest_of_ORF(dna)
-            to_return.append(to_append)
-            hold_index = indexes[i] + len(to_append)
-        else:
-            break
+    ended = False
+    index = 0
+    while ended is False:
+        start_index = -1
+        sample = list_dna[index]
+        if sample == 'ATG':
+            start_index = index
+            found_ORF = rest_of_ORF(dna[start_index*3:])
+            to_return.append(found_ORF)
+            found_ORF_length = len(found_ORF)
+            index += int(found_ORF_length/3)
+        if index >= len(list_dna)-1:
+            ended = True
+        index += 1
     return to_return
 
 
@@ -145,16 +150,16 @@ def find_all_ORFs(dna):
 
     >>> find_all_ORFs("ATGCATGAATGTAG")
     ['ATGCATGAATGTAG', 'ATGAATGTAG', 'ATG']
+
+    This test makes sure that if the dna doesn't start with a start codon, it
+    still runs
+    >>> find_all_ORFs("AAAATGCCCTAG")
+    ['ATGCCC']
     """
-    solution = []
     first = find_all_ORFs_oneframe(dna)
     second = find_all_ORFs_oneframe(dna[1:])
     third = find_all_ORFs_oneframe(dna[2:])
-    to_add = [first, second, third]
-    solution = []
-    for i in to_add:
-        if i is not None:
-            solution += i
+    solution = first + second + third
     return solution
 
 
@@ -186,11 +191,7 @@ def longest_ORF(dna):
     'ATGCTACATTCGCAT'
     """
     solution = find_all_ORFs_both_strands(dna)
-    longest = ''
-    for i in range(0, len(solution)):
-        if(len(solution[i]) > len(longest)):
-            longest = solution[i]
-    return longest
+    return(max(solution, key=len))
 
 
 def longest_ORF_noncoding(dna, num_trials):
@@ -202,10 +203,10 @@ def longest_ORF_noncoding(dna, num_trials):
         returns: the maximum length longest ORF """
     longest = 0
     to_test = []
-    for i in range(0, num_trials):
+    for i in range(num_trials):
         shuffled_dna = shuffle_string(dna)
-        to_test += longest_ORF(shuffled_dna)
-        longest = len(max(to_test))
+        to_test.append(longest_ORF(shuffled_dna))
+    longest = len(max(to_test, key=len))
     return longest
 
 
@@ -239,14 +240,12 @@ def gene_finder(dna):
     """
     threshold = longest_ORF_noncoding(dna, 1500)
     longest = find_all_ORFs_both_strands(dna)
-    print('THRESHOLD:', threshold)
     threshold = 600
     protiens = []
     for i in longest:
-        print('LEN:', len(i))
         if(len(i) > threshold):
             protiens.append(coding_strand_to_AA(i))
-    print(protiens)
+    print('PROTIENS BEGIN:', protiens)
     return protiens
 
 

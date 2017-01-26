@@ -65,6 +65,7 @@ def extract_next_gene(metagenome_lines, next_line):
                     metagenome_lines[start_line:next_line]]),
             next_line)
 
+
 def load_contigs():
     """ Loads the DNA contigs for a new bacterial communicty
         returns: a list of DNA snippets consisting of (name, sequence)
@@ -72,6 +73,7 @@ def load_contigs():
                  string of nucleotides
     """
     return load_metagenome_helper('genes segments for software_design_extension.txt')
+
 
 def load_metagenome_helper(metagenome_file):
     """ Loads the metagenome stored in the specified file.

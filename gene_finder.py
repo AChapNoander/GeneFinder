@@ -9,6 +9,7 @@ YOUR HEADER COMMENT HERE
 import random
 from amino_acids import aa, codons, aa_table   # you may find these useful
 from load import load_seq
+dna_master = load_seq("./data/X73525.fa")
 
 
 def shuffle_string(s):
@@ -21,6 +22,14 @@ def shuffle_string(s):
 
 
 def get_complement(nucleotide):
+    """ Returns the complementary nucleotide
+        nucleotide: a nucleotide (A, C, G, or T) represented as a string
+        returns: the complementary nucleotide
+    >>> get_complement('A')
+    'T'
+    >>> get_complement('C')
+    'G'
+    """
     if nucleotide == 'A':
         return 'T'
     elif nucleotide == 'T':
@@ -34,6 +43,15 @@ def get_complement(nucleotide):
 
 
 def get_reverse_complement(dna):
+    """ Computes the reverse complementary sequence of DNA for the specfied DNA
+    sequence
+    dna: a DNA sequence represented as a string
+    returns: the reverse complementary DNA sequence represented as a string
+    >>> get_reverse_complement("ATGCCCGCTTT")
+    'AAAGCGGGCAT'
+    >>> get_reverse_complement("CCGCGTTCA")
+    'TGAACGCGG'
+    """
     reversed_dna = dna[::-1]            # reverses string
     list_dna = list(reversed_dna)       # creates list from string
     blank_to_return = ''
@@ -62,7 +80,7 @@ def rest_of_ORF(dna):
     for i in range(0, length):      # Seperates out string into codons
         list_dna.append(dna[:3])    # Adds codon to list
         dna = dna[3:]               # Modifies original DNA string
-    list_dna.append(dna[::])        # Adds the remaining characters back in
+    list_dna.append(dna)            # Adds the remaining characters back in
     final_index = -1                # Establishes base case
     for i in range(0, len(list_dna)):
         for o in range(0, 3):
@@ -88,25 +106,28 @@ def find_all_ORFs_oneframe(dna):
     >>> find_all_ORFs_oneframe("ATGCATGAATGTAGATAGATGTGCCC")
     ['ATGCATGAATGTAGA', 'ATGTGCCC']
     """
+    list_dna = []
+    hold = dna
+    length = int(len(dna)/3)
+    for i in range(0, length):      # Seperates out string into codons
+        list_dna.append(dna[:3])    # Adds codon to list
+        dna = dna[3:]               # Modifies original DNA string
+    list_dna.append(dna)            # Adds the remaining characters back in
+    dna = hold
+    indexes = []
+    for i in range(0, len(list_dna)):
+        if(list_dna[i] == 'ATG'):
+            indexes.append(i*3)
     to_return = []
-    index = 0
-    while(index > -1):                          # Until no more start codons
-        index = dna.find('ATG')                 # Searches for start codon
-        if(index == -1):
-            break
-        if(index % 3 != 0):
-            dna = dna[index+(3-index % 3):]
-            index = dna.find('ATG')
-            if(index == -1 or index % 3 != 0):
-                break
-            else:
-                dna = dna[index:]
+    hold_index = -1
+    for i in range(0, len(indexes)):
+        if(hold_index < indexes[i]):
+            dna = dna[indexes[i]:]
+            to_append = rest_of_ORF(dna)
+            to_return.append(to_append)
+            hold_index = indexes[i] + len(to_append)
         else:
-            dna = dna[index:]
-        to_append = rest_of_ORF(dna)
-        to_return.append(to_append)
-        length = len(to_append)
-        dna = dna[length:]
+            break
     return to_return
 
 
@@ -186,8 +207,13 @@ def longest_ORF_noncoding(dna, num_trials):
         dna: a DNA sequence
         num_trials: the number of random shuffles
         returns: the maximum length longest ORF """
-    # TODO: implement this
-    pass
+    longest = 0
+    to_test = []
+    for i in range(0, num_trials):
+        shuffled_dna = shuffle_string(dna)
+        to_test.append(longest_ORF(shuffled_dna))
+        longest = len(max(to_test))
+    return longest
 
 
 def coding_strand_to_AA(dna):
@@ -204,35 +230,11 @@ def coding_strand_to_AA(dna):
         >>> coding_strand_to_AA("ATGCCCGCTTT")
         'MPA'
     """
-    I = ['I', 'ATT', 'ATC', 'ATA']
-    L = ['L', 'CTT', 'CTC', 'CTA', 'CTG', 'TTA', 'TTG']
-    V = ['V', 'GTT', 'GTC', 'GTA', 'GTG']
-    F = ['F', 'TTT', 'TTC']
-    M = ['M', 'ATG']
-    C = ['C', 'TGT', 'TGC']
-    A = ['A', 'GCT', 'GCC', 'GCA', 'GCG']
-    G = ['G', 'GGT', 'GGC', 'GGA', 'GGG']
-    P = ['P', 'CCT', 'CCC', 'CCA', 'CCG']
-    T = ['T', 'ACT', 'ACC', 'ACA', 'ACG']
-    S = ['S', 'TCT', 'TCC', 'TCA', 'TCG', 'AGT', 'AGC']
-    Y = ['TAT', 'TAC']
-    W = ['W', 'TGG']
-    Q = ['Q', 'CAA', 'CAG']
-    N = ['N', 'AAT', 'AAC']
-    H = ['H', 'CAT', 'CAC']
-    E = ['E', 'GAA', 'GAG']
-    D = ['D', 'GAT', 'GAC']
-    K = ['K', 'AAA', 'AAG']
-    R = ['R', 'CGT', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG']
-    amino = [I, L, V, F, M, C, A, G, P, T, S, Y, W, Q, N, H, E, D, K, R]
     solution = ''
     for i in range(0, int(len(dna)/3)):
         tested = dna[:3]
         dna = dna[3:]
-        for o in range(0, len(amino)):
-            for q in range(0, len(amino[o])):
-                if(tested == amino[o][q]):
-                    solution += amino[o][0]
+        solution += aa_table[tested]
     return solution
 
 
@@ -242,10 +244,20 @@ def gene_finder(dna):
         dna: a DNA sequence
         returns: a list of all amino acid sequences coded by the sequence dna.
     """
-    # TODO: implement this
-    pass
+    threshold = longest_ORF_noncoding(dna, 1500)
+    longest = find_all_ORFs_both_strands(dna)
+    print('THRESHOLD:', threshold)
+    threshold = 600
+    protiens = []
+    for i in longest:
+        print('LEN:', len(i))
+        if(len(i) > threshold):
+            protiens.append(coding_strand_to_AA(i))
+    print(protiens)
+    return protiens
 
 
 if __name__ == "__main__":
+    gene_finder(dna_master)
     import doctest
     doctest.testmod()

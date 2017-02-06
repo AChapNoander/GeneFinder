@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-YOUR HEADER COMMENT HERE
+GENE FINDER PROJECT 1
 
-@author: YOUR NAME HERE
+@author: ALEX CHAPMAN
 
 """
 
 import random
-from amino_acids import aa, codons, aa_table   # you may find these useful
+from amino_acids import aa, codons, aa_table
 from load import load_seq
 dna_master = load_seq("./data/X73525.fa")
-print(dna_master)
 
 
 def shuffle_string(s):
@@ -31,6 +30,8 @@ def get_complement(nucleotide):
     >>> get_complement('C')
     'G'
     """
+
+    # Because python doesnt have case statements :(
     if nucleotide == 'A':
         return 'T'
     elif nucleotide == 'T':
@@ -76,11 +77,13 @@ def rest_of_ORF(dna):
     >>> rest_of_ORF("ATGATATTCG")
     'ATGATATTCG'
     """
+    # List of stop codons
     stop_codons = ['TAG', 'TAA', 'TGA']
     list_dna = []
     ended = False
     i = 0
     while ended is False:
+        # Searches by 3-char intervals
         i += 3
         to_append = dna[i-3:i]
         list_dna.append
@@ -90,6 +93,7 @@ def rest_of_ORF(dna):
             if(i > len(dna)):
                 return(dna)
                 ended = True
+    # Returns the string instead of the list of codons
     to_return = dna[0:i-3]
     return to_return
 
@@ -123,14 +127,15 @@ def find_all_ORFs_oneframe(dna):
     to_return = []
     ended = False
     index = 0
-    while ended is False:
+    while ended is False:           # Similar to previous loop
         start_index = -1
         sample = list_dna[index]
         if sample == 'ATG':
-            start_index = index
+            start_index = index     # Establishes where the codon starts
             found_ORF = rest_of_ORF(dna[start_index*3:])
             to_return.append(found_ORF)
             found_ORF_length = len(found_ORF)
+            # Sets the cursor index to the end of the found ORF
             index += int(found_ORF_length/3)
         if index >= len(list_dna)-1:
             ended = True
@@ -175,7 +180,6 @@ def find_all_ORFs_both_strands(dna):
     base_pair = get_reverse_complement(dna)
     base = find_all_ORFs(dna)
     paired = find_all_ORFs(base_pair)
-    solution = []
     to_add = [base, paired]
     solution = []
     for i in to_add:
